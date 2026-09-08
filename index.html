@@ -85,7 +85,7 @@
   }
   form.stats-form input:focus,form.stats-form select:focus{outline:none;border-color:var(--amber);}
   .divider-label{grid-column:1/-1;font-size:12px;text-transform:none;color:var(--cyan);font-weight:600;margin-top:6px;border-top:1px solid var(--line);padding-top:14px;}
-  .save-btn{grid-column:1/-1;background:var(--amber);color:#1A1300;border:none;border-radius:6px;padding:11px;font-weight:700;font-size:13.5px;cursor:pointer;font-family:'Chakra Petch',sans-serif;letter-spacing:0.3px;}
+  .save-btn{grid-column:1/-1;background:var(--amber);color:#1A1300;border:none;border-radius:6px;padding:11px;font-weight:700;font-size:13.5px;cursor:pointer;font-family:'Chakra Petch',sans-serif;transition:filter .15s;}
   .save-btn:hover{filter:brightness(1.08);}
   .save-btn:disabled{opacity:0.5;cursor:default;}
 
@@ -349,7 +349,7 @@ document.querySelectorAll('.tabbtn').forEach(btn=>{
 const plans = {
   cs2: {
     title: "CS2",
-    intro: "CS2 rewards a clean one-tap and disciplined crosshair placement more than raw tracking. Sessions below are weighted toward static/dynamic clicking and short flicks, with just enough tracking to hold spray patterns.",
+    intro: "CS2 rewards a clean one-tap and disciplined crosshair placement more than raw tracking. Sessions below are weighted toward static/dynamic clicking and short flicks, with just enough tracking to stay smooth on sprays.",
     cards: [
       {
         h: "Precision clicking",
@@ -382,7 +382,7 @@ const plans = {
   },
   valorant: {
     title: "Valorant",
-    intro: "Valorant's duels are decided by tight, first-bullet accuracy at close-to-mid range, plus enough tracking for rifles like Vandal/Phantom spray-downs. Plans lean flick-heavy with a tracking supplement.",
+    intro: "Valorant's duels are decided by tight, first-bullet accuracy at close-to-mid range, plus enough tracking for rifles like Vandal/Phantom spray-downs. Plans lean flick-heavy with a tracking backup.",
     cards: [
       {
         h: "First-bullet accuracy",
@@ -413,7 +413,7 @@ const plans = {
   },
   rivals: {
     title: "Marvel Rivals",
-    intro: "Rivals mixes hitscan, projectile, and melee heroes across a very vertical map set. Aim needs to cover sustained tracking (Punisher, Hawkeye), flick precision, and fast target-switching between dive threats.",
+    intro: "Rivals mixes hitscan, projectile, and melee heroes across a very vertical map set. Aim needs to cover sustained tracking (Punisher, Hawkeye), flick precision, and fast target-switching.",
     cards: [
       {
         h: "Tracking (hitscan DPS)",
@@ -444,7 +444,7 @@ const plans = {
   },
   ow2: {
     title: "Overwatch 2",
-    intro: "OW2 hitscan heroes (Soldier, Ashe, Cassidy, Widow) need both tracking and flicking, while flex/support players benefit more from reaction and target-priority drills. This plan covers the hitscan DPS case as the default.",
+    intro: "OW2 hitscan heroes (Soldier, Ashe, Cassidy, Widow) need both tracking and flicking, while flex/support players benefit more from reaction and target-priority drills. This plan covers all three.",
     cards: [
       {
         h: "Hitscan tracking",
@@ -496,63 +496,69 @@ function renderPlan(key){
 }
 ['cs2','valorant','rivals','ow2'].forEach(renderPlan);
 
-/* ---------- stats: persistent storage ---------- */
+/* ---------- stats: localStorage-based persistent storage ---------- */
 const form = document.getElementById('statsForm');
 const savedList = document.getElementById('savedList');
 const statusMsg = document.getElementById('statusMsg');
 const STORAGE_PREFIX = 'aimstats:';
 
-async function loadEntries(){
-  savedList.innerHTML = '<div class="empty-state">Loading…</div>';
-  try{
-    const listResult = await window.storage.list(STORAGE_PREFIX, false);
-    const keys = (listResult && listResult.keys) ? listResult.keys : [];
-    if(keys.length === 0){
-      savedList.innerHTML = '<div class="empty-state">No entries yet. Add your first game above.</div>';
-      return;
-    }
-    const entries = [];
-    for(const key of keys){
-      try{
-        const res = await window.storage.get(key, false);
-        if(res && res.value) entries.push(JSON.parse(res.value));
-      }catch(e){ /* skip unreadable key */ }
-    }
-    if(entries.length === 0){
-      savedList.innerHTML = '<div class="empty-state">No entries yet. Add your first game above.</div>';
-      return;
-    }
-    savedList.innerHTML = '';
-    entries.forEach(entry=>{
-      const div = document.createElement('div');
-      div.className = 'saved-entry';
-      div.innerHTML = `
-        <div>
-          <div class="game-tag">${entry.game}</div>
-          <div class="row">Current: <b>${entry.curRank || '—'}</b> · <b>${entry.curStat || '—'}</b></div>
-          <div class="row">Goal: <b>${entry.goalRank || '—'}</b> · <b>${entry.goalStat || '—'}</b></div>
-        </div>
-        <button class="delete-btn" data-game="${entry.game}">Remove</button>
-      `;
-      savedList.appendChild(div);
-    });
-    savedList.querySelectorAll('.delete-btn').forEach(btn=>{
-      btn.addEventListener('click', async ()=>{
-        try{
-          await window.storage.delete(STORAGE_PREFIX+btn.dataset.game, false);
-          loadEntries();
-        }catch(e){ statusMsg.textContent = 'Could not remove entry.'; }
-      });
-    });
-  }catch(e){
-    savedList.innerHTML = '<div class="empty-state">Could not load saved entries.</div>';
+function loadEntries(){
+  savedList.innerHTML = '';
+  const keys = Object.keys(localStorage).filter(k => k.startsWith(STORAGE_PREFIX));
+  
+  if(keys.length === 0){
+    savedList.innerHTML = '<div class="empty-state">No entries yet. Add your first game above.</div>';
+    return;
   }
+  
+  const entries = [];
+  keys.forEach(key => {
+    try{
+      const value = localStorage.getItem(key);
+      if(value) entries.push(JSON.parse(value));
+    }catch(e){
+      console.error('Error parsing entry:', e);
+    }
+  });
+  
+  if(entries.length === 0){
+    savedList.innerHTML = '<div class="empty-state">No entries yet. Add your first game above.</div>';
+    return;
+  }
+  
+  entries.forEach(entry=>{
+    const div = document.createElement('div');
+    div.className = 'saved-entry';
+    div.innerHTML = `
+      <div>
+        <div class="game-tag">${entry.game}</div>
+        <div class="row">Current: <b>${entry.curRank || '—'}</b> · <b>${entry.curStat || '—'}</b></div>
+        <div class="row">Goal: <b>${entry.goalRank || '—'}</b> · <b>${entry.goalStat || '—'}</b></div>
+      </div>
+      <button class="delete-btn" data-game="${entry.game}">Remove</button>
+    `;
+    savedList.appendChild(div);
+  });
+  
+  savedList.querySelectorAll('.delete-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const gameKey = STORAGE_PREFIX + btn.dataset.game;
+      localStorage.removeItem(gameKey);
+      statusMsg.textContent = 'Entry removed.';
+      loadEntries();
+      setTimeout(()=> statusMsg.textContent = '', 2000);
+    });
+  });
 }
 
-form.addEventListener('submit', async (e)=>{
+form.addEventListener('submit', (e)=>{
   e.preventDefault();
   const game = document.getElementById('f-game').value;
-  if(!game){ statusMsg.textContent = 'Pick a game first.'; return; }
+  if(!game){ 
+    statusMsg.textContent = 'Pick a game first.'; 
+    return; 
+  }
+  
   const entry = {
     game,
     curRank: document.getElementById('f-cur-rank').value.trim(),
@@ -560,17 +566,16 @@ form.addEventListener('submit', async (e)=>{
     goalRank: document.getElementById('f-goal-rank').value.trim(),
     goalStat: document.getElementById('f-goal-stat').value.trim(),
   };
-  const saveBtn = document.getElementById('saveBtn');
-  saveBtn.disabled = true;
+  
   try{
-    await window.storage.set(STORAGE_PREFIX+game, JSON.stringify(entry), false);
-    statusMsg.textContent = 'Saved.';
+    localStorage.setItem(STORAGE_PREFIX + game, JSON.stringify(entry));
+    statusMsg.textContent = 'Saved!';
     form.reset();
     loadEntries();
+    setTimeout(()=> statusMsg.textContent = '', 2000);
   }catch(err){
+    console.error('Save error:', err);
     statusMsg.textContent = 'Save failed — try again.';
-  }finally{
-    saveBtn.disabled = false;
   }
 });
 
