@@ -313,21 +313,25 @@
     hits++;
     counter.textContent = hits + ' / ' + TOTAL_TARGETS;
     current.classList.add('hit');
-    setTimeout(()=>current && current.remove(), 300);
-    if(hits >= TOTAL_TARGETS){
-      hint.style.opacity = '0';
-      counter.style.opacity = '0';
-      setTimeout(()=>{
-        nameEl.classList.add('reveal');
+    const hitTarget = current;
+    current = null;
+    setTimeout(()=>{
+      if(hitTarget && hitTarget.parentNode) hitTarget.remove();
+      if(hits >= TOTAL_TARGETS){
+        hint.style.opacity = '0';
+        counter.style.opacity = '0';
         setTimeout(()=>{
-          overlay.classList.add('hide');
-          site.classList.add('site-visible');
-          setTimeout(()=> overlay.remove(), 650);
-        }, 1300);
-      }, 300);
-    } else {
-      spawnTarget();
-    }
+          nameEl.classList.add('reveal');
+          setTimeout(()=>{
+            overlay.classList.add('hide');
+            site.classList.add('site-visible');
+            setTimeout(()=> overlay.remove(), 650);
+          }, 1300);
+        }, 300);
+      } else {
+        spawnTarget();
+      }
+    }, 300);
   }
 
   spawnTarget();
