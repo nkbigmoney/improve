@@ -123,6 +123,7 @@
     border:2px solid var(--amber);background:rgba(255,176,32,0.08);
     display:flex;align-items:center;justify-content:center;cursor:pointer;
     animation:targetPulse 1.1s ease-in-out infinite;
+    z-index:1;
   }
   .target::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--amber);}
   .target.hit{animation:targetHit .28s ease forwards;pointer-events:none;}
@@ -293,10 +294,13 @@
   const nameEl = document.getElementById('introName');
   const site = document.getElementById('site');
   const TOTAL_TARGETS = 3;
+  
   let hits = 0;
-  let current = null;
+  let isComplete = false;
 
   function spawnTarget(){
+    if(isComplete) return;
+    
     const t = document.createElement('div');
     t.className = 'target';
     const margin = 90;
@@ -304,34 +308,35 @@
     const y = 150 + Math.random() * (window.innerHeight - 320);
     t.style.left = x + 'px';
     t.style.top = y + 'px';
-    t.addEventListener('click', onHit, {once:true});
-    overlay.appendChild(t);
-    current = t;
-  }
-
-  function onHit(e){
-    hits++;
-    counter.textContent = hits + ' / ' + TOTAL_TARGETS;
-    current.classList.add('hit');
-    const hitTarget = current;
-    current = null;
-    setTimeout(()=>{
-      if(hitTarget && hitTarget.parentNode) hitTarget.remove();
-      if(hits >= TOTAL_TARGETS){
-        hint.style.opacity = '0';
-        counter.style.opacity = '0';
-        setTimeout(()=>{
-          nameEl.classList.add('reveal');
+    
+    t.onclick = () => {
+      t.onclick = null;
+      hits++;
+      counter.textContent = hits + ' / ' + TOTAL_TARGETS;
+      t.classList.add('hit');
+      
+      setTimeout(() => {
+        t.remove();
+        
+        if(hits >= TOTAL_TARGETS){
+          isComplete = true;
+          hint.style.opacity = '0';
+          counter.style.opacity = '0';
           setTimeout(()=>{
-            overlay.classList.add('hide');
-            site.classList.add('site-visible');
-            setTimeout(()=> overlay.remove(), 650);
-          }, 1300);
-        }, 300);
-      } else {
-        spawnTarget();
-      }
-    }, 300);
+            nameEl.classList.add('reveal');
+            setTimeout(()=>{
+              overlay.classList.add('hide');
+              site.classList.add('site-visible');
+              setTimeout(()=> overlay.remove(), 650);
+            }, 1300);
+          }, 300);
+        } else {
+          spawnTarget();
+        }
+      }, 280);
+    };
+    
+    overlay.appendChild(t);
   }
 
   spawnTarget();
