@@ -1,5 +1,7 @@
 # improve — Aim Training Hub
 
+**🎮 [Visit the website](https://nkbigmoney.github.io/improve/)**
+
 A single-page site with Aimlabs + Kovaaks training plans per game, and a manual stats tracker for current vs. goal rank.
 
 ## What's in here
@@ -9,7 +11,7 @@ A single-page site with Aimlabs + Kovaaks training plans per game, and a manual 
 ## Tabs
 
 - **Home** — overview of the four games covered.
-- **CS2 / Valorant / Marvel Rivals / Overwatch 2** — each has a training plan broken into 3 skill blocks (precision, tracking, target switching/reaction), with named Aim Labs and Kovaaks scenarios and a suggested session order.
+- **CS2 / Valorant / Marvel Rivals / Overwatch 2** — each has a training plan broken into 3 skill blocks (precision, tracking, target switching/reaction), with named Aim Labs and Kovaaks scenarios.
 - **Lineups** — placeholder tab. Not built yet.
 - **My Stats** — enter your current rank/stat and goal rank/stat per game. Saved and reloaded automatically.
 
@@ -36,3 +38,5 @@ the script.
 
 `index.html` is fully self-contained. Drop it on any static host (GitHub Pages, Netlify, Vercel, or just open it
 locally in a browser) and it works as-is.
+
+This site is hosted on **GitHub Pages** — no additional setup needed!
