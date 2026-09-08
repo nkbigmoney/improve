@@ -1,4 +1,4 @@
-# Crosshair — Aim Training Hub
+# improve — Aim Training Hub
 
 A single-page site with Aimlabs + Kovaaks training plans per game, and a manual stats tracker for current vs. goal rank.
 
